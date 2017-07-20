@@ -23,6 +23,8 @@ password='xxxxx'
 
 
 Sexo<-NULL
+Sexo$hombre=0
+Sexo$mujer=0
 
 # Iniciar servidor
 rD <- rsDriver(port=4895L, browser="phantomjs")

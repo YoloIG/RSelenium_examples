@@ -55,6 +55,8 @@ remDr$screenshot(display=TRUE)
 ##########################################################################
 
 
+
+
 #Navegar al grupo de Programacion en R
 remDr$navigate("https://www.facebook.com/groups/1906504086251604/members/")
 
@@ -70,12 +72,13 @@ totalVistas=as.integer(total/100)
 
 #Empezar con las listas de miembros
 paravistas<-1:totalVistas
+
 final<-lapply(paravistas, function(x)
 {
 remDr$navigate("https://www.facebook.com/")
 remDr$navigate("https://www.facebook.com/groups/1906504086251604/members/")
 
-print(paste0("Extrer informacion de la vista de mimebros numero: ", x))
+print(paste0("Extrer informacion de la vista de miembros numero: ", x))
 
 ventanas<-1:x
 
@@ -84,17 +87,17 @@ datos<- lapply(ventanas,function(x)
   webElems <- remDr$findElement("partial link text","Ver m")
   webElems$getElementText()
   webElems$clickElement() 
-  print(x)
+  #print(x)
   Sys.sleep(3)
   
 })
 
 print("Extraer lista completa de usuarios en la vista...")
 doc<-htmlParse(remDr$getPageSource()[[1]])
-tabladat<-as.data.frame(readHTMLTable(doc)[x], Encoding='UTFddd-8')
+tabladat<-as.data.frame(readHTMLTable(doc)[x], Encoding='UTF-8')
 tabladat %>% mutate_if(is.factor, as.character) ->tabladat
 tabladat$vista<-x
-print("Integrar lista completa de usuarios Ãºnicos en la vista...")
+print("Integrar lista completa de usuarios unicos en la vista...")
 names(tabladat)<-c("lista1","lista2", "ventana")
 tabladat$nombre<-substr(tabladat$lista1,1,str_locate(tabladat$lista1," "))
 tabladat1<-tabladat[,c("nombre", "ventana")]
@@ -131,14 +134,15 @@ a<-sapply(webElems_inicio, function(x){x$getElementAttribute('text')})
 print(x)
 
 webElems_inicio<-webElems
-i=0
-
 inicio<-x
+i<-0
 
 Sexo<-lapply(a, function(x){
+ 
   
-i=i+1
-print(paste0("Explorar cada coincidencia ",x))
+i<<-i+1
+
+print(paste0("Explorar coincidencia numero: ",i, "; ", x))
 nombre<-x
 remDr$navigate("https://www.facebook.com/groups/1906504086251604/members/")
 
@@ -156,7 +160,7 @@ llegar_ventana<- lapply(ventanas,function(x)
 webElems_incio <- remDr$findElements("partial link text",inicio)
 print("Ubicar usuario...")
 webElems_incio[[i]]$clickElement() 
-
+#remDr$screenshot(display=TRUE)
 
 print("Identificar informacion del usuario...")
 Sys.sleep(3)
@@ -169,7 +173,6 @@ text <- xpathSApply(doc, "//text()[not(ancestor::script)][not(ancestor::style)][
 if(is.na(match("Mujer",text)) && is.na(match("Hombre",text))) 
 {
   
-#en caso de utilizar Chrome, estas instrucciones tienen que usarse
 webElems <- remDr$findElement("partial link text","y de con")
 Sys.sleep(3)
 webElems$clickElement() 
@@ -181,29 +184,51 @@ text <- xpathSApply(doc, "//text()[not(ancestor::script)][not(ancestor::style)][
 print("Usuario programado con otra ventana")
 }
 
-print("Verirficar genero...")
+
+total_id<-NULL
+total_id<-text[which(text=="Facebook")[2]-1]
+if(is.na(total_id)){total_id<-as.character(remDr$getCurrentUrl())}
+print(total_id)
+
+print("Verificar genero...")
 
 if(!is.na(match("Mujer",text)))
 {
-  Sexo$mujer=Sexo$mujer+1
+  Sexo$mujer=1
   print("Usuario es mujer.")
 }
 
 if(!is.na(match("Hombre",text)))
 {
-  Sexo$hombre=Sexo$hombre+1
+  Sexo$hombre=1
   print("Usuario es hombre.")
 }
 
-return(Sexo)
+Sexo$usuario<-x
+Sexo$identificador<-total_id
+
+return(data.frame(Sexo))
 
 
 })
 
+
+Sexo<-as.data.frame(do.call(rbind,Sexo))
+
 return(Sexo)
 
 })
 
+Sexo_total<-as.data.frame(do.call(rbind,Sexo_total))
 return(Sexo_total)
 
 })
+
+
+final2<-unique(as.data.frame(do.call(rbind,final)))
+Prop<-sum(final2$mujer)/(sum(final2$hombre)+sum(final2$mujer))
+
+print(paste0("La proporción por género del grupo Programación en R es de: ",
+      round(Prop*100,2), "% mujeres y ", 100-round(Prop*100,2), " hombres."))
+
+

@@ -54,6 +54,7 @@ Sys.sleep(5)
 remDr$screenshot(display=TRUE)
 ##########################################################################
 
+
 #Navegar al grupo de Programacion en R
 remDr$navigate("https://www.facebook.com/groups/1906504086251604/members/")
 
@@ -68,14 +69,14 @@ total<-as.integer(str_sub(TextoCuantos,str_locate(TextoCuantos, '[(]')[1]+1,
 totalVistas=as.integer(total/100)
 
 #Empezar con las listas de miembros
-paravistas<-1:1
+paravistas<-1:totalVistas
 
 final<-lapply(paravistas, function(x)
 {
 remDr$navigate("https://www.facebook.com/")
 remDr$navigate("https://www.facebook.com/groups/1906504086251604/members/")
 
-print(paste0("Extrer informacion de la vista de miembros numero: ", x))
+print(paste0("Extraer informacion de la vista de miembros numero: ", x))
 
 ventanas<-1:x
 
@@ -94,6 +95,7 @@ doc<-htmlParse(remDr$getPageSource()[[1]])
 tabladat<-as.data.frame(readHTMLTable(doc)[x], Encoding='UTF-8')
 tabladat %>% mutate_if(is.factor, as.character) ->tabladat
 tabladat$vista<-x
+
 print("Integrar lista completa de usuarios unicos en la vista...")
 names(tabladat)<-c("lista1","lista2", "ventana")
 tabladat$nombre<-substr(tabladat$lista1,1,str_locate(tabladat$lista1," "))
@@ -103,7 +105,7 @@ tabladatf<-unique(rbind(tabladat1,tabladat2))
 
 #Empezamos a revisar cada nombre
 
-  nombre<-tabladatf$nombre[35:35]
+nombre<-tabladatf$nombre
 
 Sexo_total<-lapply(nombre,function(x)
 {
@@ -124,19 +126,14 @@ llegar_ventana<- lapply(ventanas,function(x)
 
 
 webElems_inicio <- remDr$findElements("partial link text",x)
+
 print(paste0("Indentificar total de usuarios con el mismo inicio de nombre ",x))
 a<-sapply(webElems_inicio, function(x){x$getElementAttribute('text')})
-#nombre<-a[[1]]
-#print(a)
-print(x)
-
 webElems_inicio<-webElems
 inicio<-x
 i<-0
 
 Sexo<-lapply(a, function(x){
- 
-  
 i<<-i+1
 
 print(paste0("Explorar coincidencia numero: ",i, "; ", x))
@@ -175,50 +172,53 @@ print("El identificador unico del usuario es:")
 print(total_id)
 
 
+if(is.na(match("Mujer",text)) && is.na(match("Hombre",text))) 
+{
+  
 #Verificar si el usuario declaró su sexo
 result <- tryCatch({
   suppressMessages({
     remDr$findElement("partial link text","y de con")
   })
-}, error = function(e) {0})
+}, error = function(e) {NULL})
 
-if(result!=0)
+
+if(!is.null(result))
 {
   
-if(is.na(match("Mujer",text)) && is.na(match("Hombre",text))) 
-{
-Sys.sleep(3)
 webElems$clickElement() 
 webElems <- remDr$findElement("partial link text","y de con")
-Sys.sleep(3)
 webElems$clickElement()
+Sys.sleep(3)
+
 doc<-htmlParse(remDr$getPageSource()[[1]])
 text <- xpathSApply(doc, "//text()[not(ancestor::script)][not(ancestor::style)][not(ancestor::noscript)][not(ancestor::form)]", xmlValue)
 print("Usuario programado con otra ventana")
-}
 
 
-
-
-
-print("Verificar genero...")
-
-if(!is.na(match("Mujer",text)))
-{
-  Sexo$mujer=1
-  print("Usuario es mujer.")
-}
-
-if(!is.na(match("Hombre",text)))
-{
-  Sexo$hombre=1
-  print("Usuario es hombre.")
-}
 
 }else{text="Sin Genero"
 Sexo$mujer=0
 Sexo$hombre=0
 print("Usuario sin genero declarado")}
+
+}
+
+print("Verificar genero cuando es declarado...")
+
+if(!is.na(match("Mujer",text)) && text!="Sin Genero")
+{
+  Sexo$mujer=1
+  print("Usuario es mujer.")
+}
+
+if(!is.na(match("Hombre",text)) && text!="Sin Genero")
+{
+  Sexo$hombre=1
+  print("Usuario es hombre.")
+}
+
+
 
 
 

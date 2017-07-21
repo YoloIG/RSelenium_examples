@@ -12,14 +12,14 @@ library(XML)
 # El presente proyecto es una propuesta de crawling de información
 # desde Facebook. Favor de verificar información input relevante.
 
-############ Información input relevante ###################################################
+############ Información input relevante ##################################
 
 # Para poder ejecutar esta sintaxis, es necesario proporcionar usuario y contraseña:
 # Favor de ingresarlo en las siguientes variables:
 usuario='xxx@xxxxx'
 password='xxxxx'
   
-#############################################################################
+############################################################################
 
 
 Sexo<-NULL

@@ -54,9 +54,6 @@ Sys.sleep(5)
 remDr$screenshot(display=TRUE)
 ##########################################################################
 
-
-
-
 #Navegar al grupo de Programacion en R
 remDr$navigate("https://www.facebook.com/groups/1906504086251604/members/")
 
@@ -71,7 +68,7 @@ total<-as.integer(str_sub(TextoCuantos,str_locate(TextoCuantos, '[(]')[1]+1,
 totalVistas=as.integer(total/100)
 
 #Empezar con las listas de miembros
-paravistas<-1:totalVistas
+paravistas<-1:1
 
 final<-lapply(paravistas, function(x)
 {
@@ -106,7 +103,7 @@ tabladatf<-unique(rbind(tabladat1,tabladat2))
 
 #Empezamos a revisar cada nombre
 
-nombre<-tabladatf$nombre
+  nombre<-tabladatf$nombre[35:35]
 
 Sexo_total<-lapply(nombre,function(x)
 {
@@ -170,10 +167,26 @@ Sys.sleep(3)
 doc<-htmlParse(remDr$getPageSource()[[1]])
 text <- xpathSApply(doc, "//text()[not(ancestor::script)][not(ancestor::style)][not(ancestor::noscript)][not(ancestor::form)]", xmlValue)
 
-if(is.na(match("Mujer",text)) && is.na(match("Hombre",text))) 
+#Extraer identificador único del usuario
+total_id<-NULL
+total_id<-text[which(text=="Facebook")[2]-1]
+if(is.na(total_id)){total_id<-as.character(remDr$getCurrentUrl())}
+print("El identificador unico del usuario es:")
+print(total_id)
+
+
+#Verificar si el usuario declaró su sexo
+result <- tryCatch({
+  suppressMessages({
+    remDr$findElement("partial link text","y de con")
+  })
+}, error = function(e) {0})
+
+if(result!=0)
 {
   
-webElems <- remDr$findElement("partial link text","y de con")
+if(is.na(match("Mujer",text)) && is.na(match("Hombre",text))) 
+{
 Sys.sleep(3)
 webElems$clickElement() 
 webElems <- remDr$findElement("partial link text","y de con")
@@ -185,10 +198,8 @@ print("Usuario programado con otra ventana")
 }
 
 
-total_id<-NULL
-total_id<-text[which(text=="Facebook")[2]-1]
-if(is.na(total_id)){total_id<-as.character(remDr$getCurrentUrl())}
-print(total_id)
+
+
 
 print("Verificar genero...")
 
@@ -203,6 +214,13 @@ if(!is.na(match("Hombre",text)))
   Sexo$hombre=1
   print("Usuario es hombre.")
 }
+
+}else{text="Sin Genero"
+Sexo$mujer=0
+Sexo$hombre=0
+print("Usuario sin genero declarado")}
+
+
 
 Sexo$usuario<-x
 Sexo$identificador<-total_id
@@ -230,5 +248,4 @@ Prop<-sum(final2$mujer)/(sum(final2$hombre)+sum(final2$mujer))
 
 print(paste0("La proporción por género del grupo Programación en R es de: ",
       round(Prop*100,2), "% mujeres y ", 100-round(Prop*100,2), " hombres."))
-
 
